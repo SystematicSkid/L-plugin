@@ -7,12 +7,9 @@ PluginSetup("cdk's L++ sample");
 std::vector<IUnit*> GetMinionsNearby(bool friendly, bool enemy, bool neutral)
 {
 	auto minions = GEntityList->GetAllMinions(friendly, enemy, neutral);
-
 	auto local = GEntityList->Player();
-	auto local_pos = local->GetPosition();
-	auto local_range = local->AttackRange();
 
-	minions.erase(std::remove_if(minions.begin(), minions.end(), [&](IUnit* m) { return !m || m->IsDead() || (m->GetPosition() - local_pos).Length() < local_range; }));
+	minions.erase(std::remove_if(minions.begin(), minions.end(), [&](IUnit* m) { return !m || m->IsDead() || !local->IsValidTarget(m, local->AttackRange()); }));
 
 	return minions;
 }
@@ -20,7 +17,6 @@ std::vector<IUnit*> GetMinionsNearby(bool friendly, bool enemy, bool neutral)
 PLUGIN_EVENT(void) BeforeAttack()
 {
 	auto local = GEntityList->Player();
-
 	auto minions = GetMinionsNearby(0, 1, 1);
 
 	for (auto &m : minions)
