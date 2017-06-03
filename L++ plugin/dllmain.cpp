@@ -17,12 +17,9 @@ std::vector<IUnit*> GetMinionsNearby(bool friendly, bool enemy, bool neutral)
 	return minions;
 }
 
-PLUGIN_EVENT(void) OnGameUpdate()
+PLUGIN_EVENT(void) BeforeAttack()
 {
 	auto local = GEntityList->Player();
-
-	if (!local || local->IsDead() || !GOrbwalking->CanAttack())
-		return;
 
 	auto minions = GetMinionsNearby(0, 1, 1);
 
@@ -39,11 +36,11 @@ PLUGIN_EVENT(void) OnGameUpdate()
 PLUGIN_API void OnLoad(IPluginSDK* PluginSDK)
 {
 	PluginSDKSetup(PluginSDK);
-	GEventManager->AddEventHandler(kEventOnGameUpdate, OnGameUpdate);
+	GEventManager->AddEventHandler(kEventOrbwalkBeforeAttack, BeforeAttack);
 
 }
 
 PLUGIN_API void OnUnload()
 {
-	GEventManager->RemoveEventHandler(kEventOnGameUpdate, OnGameUpdate);
+	GEventManager->RemoveEventHandler(kEventOrbwalkBeforeAttack, BeforeAttack);
 }
