@@ -14,7 +14,7 @@ std::vector<IUnit*> GetMinionsNearby(bool friendly, bool enemy, bool neutral)
 	return minions;
 }
 
-IUnit* BestTarget()
+IUnit* BestTarget(float max_range)
 {
 	auto heroes = GEntityList->GetAllHeros(0, 1);
 	auto local = GEntityList->Player();
@@ -24,12 +24,16 @@ IUnit* BestTarget()
 
 	for (auto &h : heroes)
 	{
-		if (!h || h->IsDead() || local->IsValidTarget(h, local->AttackRange()))
+		if (!h || h->IsDead() || local->IsValidTarget(h, max_range))
 			continue;
 
-		float score = static_cast<float>(h->GetDeaths() - h->GetKills()) + (h->GetMaxHealth() - h->GetHealth()) - (h->TotalMagicDamage() + h->TotalPhysicalDamage());
+		int kills = h->GetKills() ? 1 : h->GetKills();
+		int deaths = h->GetDeaths() ? 1 : h->GetDeaths();
+
+		float score = h->GetMaxHealth() * kills - h->GetHealth() * deaths;
 
 		int mana = h->GetMana();
+
 		for (int i = 0; i < 6; i++)
 			if (h->GetSpellState(static_cast<eSpellSlot>(i)) == NoMana)
 				score += static_cast<float>(mana * (i + 1)); // did someone ran out of mana? hehehe
@@ -40,7 +44,7 @@ IUnit* BestTarget()
 			best = h;
 		}
 	}
-	
+
 	return best;
 }
 
@@ -51,7 +55,7 @@ PLUGIN_EVENT(void) BeforeAttack()
 
 	for (auto &m : minions)
 	{
-		if (m->GetHealth() <= local->TotalPhysicalDamage())
+		if (m->GetHealth() <= static_cast<float>(GDamage->GetAutoAttackDamage(local, m, false)))
 		{
 			GOrbwalking->SetOverrideTarget(m);
 			break;
