@@ -14,6 +14,36 @@ std::vector<IUnit*> GetMinionsNearby(bool friendly, bool enemy, bool neutral)
 	return minions;
 }
 
+IUnit* BestTarget()
+{
+	auto heroes = GEntityList->GetAllHeros(0, 1);
+	auto local = GEntityList->Player();
+	
+	float max_score = 0;
+	IUnit* best = NULL;
+
+	for (auto &h : heroes)
+	{
+		if (!h || h->IsDead() || local->IsValidTarget(h, local->AttackRange()))
+			continue;
+
+		float score = static_cast<float>(h->GetDeaths() - h->GetKills()) + (h->GetMaxHealth() - h->GetHealth()) - (h->TotalMagicDamage() + h->TotalPhysicalDamage());
+
+		int mana = h->GetMana();
+		for (int i = 0; i < 6; i++)
+			if (h->GetSpellState(static_cast<eSpellSlot>(i)) == NoMana)
+				score += static_cast<float>(mana * (i + 1)); // did someone ran out of mana? hehehe
+
+		if (score > max_score)
+		{
+			max_score = score;
+			best = h;
+		}
+	}
+	
+	return best;
+}
+
 PLUGIN_EVENT(void) BeforeAttack()
 {
 	auto local = GEntityList->Player();
